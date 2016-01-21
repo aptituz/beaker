@@ -170,6 +170,7 @@ module Beaker
           module_names = opts[:module_names] || Dir.glob("#{source_dir}/*").select { |f| File.directory?(f) }
           copy_module_opts = opts[:copy_module_opts]
           module_names.each do |module_name|
+            copy_module_opts[:module_name] = module_name
             copy_module_opts[:source] = File.join(source_dir, module_name)
             copy_module_to(one_or_more_hosts, copy_module_opts)
           end
