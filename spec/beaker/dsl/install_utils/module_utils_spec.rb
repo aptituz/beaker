@@ -108,6 +108,56 @@ describe ClassMixedWithDSLInstallUtils do
     end
   end
 
+  describe 'copy_modules_to' do
+    let(:source_dir){ File.expand_path('./')}
+    let(:all_module_names){['testmodule1', 'testmodule2', 'testmodule3']}
+
+    describe "with some module_names" do
+       let (:module_names){['testmodule1', 'testmodule3']}
+
+       it 'calls copy_module_to for each given module_name' do
+         module_names.each do |module_name|
+           expect( subject ).to receive( :copy_module_to ).with( hosts, { :source => File.join(source_dir, module_name) } )
+         end
+         subject.copy_modules_to(hosts, { :module_names => module_names })
+       end
+      end
+
+    describe "with no module_names" do
+        it 'calls copy_module_to for all dirs in source_dir' do
+          allow( Dir ).to receive( :glob ).with( "#{source_dir}/*" ).and_return(all_module_names)
+          allow( File ).to receive( :directory? ).and_return(true)
+
+          all_module_names.each do |module_name|
+            expect( subject ).to receive( :copy_module_to ).with( hosts, { :source => File.join(source_dir, module_name) } )
+          end
+          subject.copy_modules_to(hosts)
+        end
+
+        it 'ignores files in source_path' do
+          allow( Dir ).to receive( :glob ).with( "#{source_dir}/*" ).and_return(["module", "testfile"])
+          allow( File ).to receive( :directory? ).with("module").and_return(true)
+          allow( File ).to receive( :directory? ).with("testfile").and_return(false)
+
+          expect( subject ).to receive( :copy_module_to ).once
+          subject.copy_modules_to(hosts)
+        end
+    end
+
+    describe "with options for copy_modules_to" do
+        let (:module_names){['testmodule1']}
+
+        let(:copy_module_opts) { { :protocol => 'rsync' } }
+        let(:opts) { {:module_names=> module_names,
+                      :copy_module_opts => copy_module_opts }}
+
+        it 'passes options to copy_module_to' do
+          expect( subject ).to receive( :copy_module_to ).with( hosts, copy_module_opts )
+          subject.copy_modules_to(hosts, opts)
+       end
+    end
+  end
+
   describe 'copy_module_to' do
     let(:ignore_list) { Beaker::DSL::InstallUtils::ModuleUtils::PUPPET_MODULE_INSTALL_IGNORE }
     let(:source){ File.expand_path('./')}

@@ -151,6 +151,30 @@ module Beaker
         end
         alias :copy_root_module_to :copy_module_to
 
+        # Install the desired locales modules to one or more hosts
+        # can be used for example to copy spec fixtures into the acceptance test environment
+        # @param [Host, Array<Host>, String, Symbol] one_or_more_hosts
+        #                   One or more hosts to act upon,
+        #                   or a role (String or Symbol) that identifies one or more hosts.
+        # @option opts [String] :source_dir ('./')
+        #                   The source directory where the modules sit
+        # @option opts [Array<ModuleName>] :module_names (nil)
+        #                   Names of the module directories to be copied from the source_path.
+        # @param opts [Hash] :copy_module_opts
+        #                   Options to be passed to the copy_module method
+        def copy_modules_to(one_or_more_hosts, opts = {})
+          opts = { :source_dir => './',
+                   :module_names => nil,
+                   :copy_module_opts => {} }.merge(opts)
+          source_dir = File.expand_path(opts[:source_dir])
+          module_names = opts[:module_names] || Dir.glob("#{source_dir}/*").select { |f| File.directory?(f) }
+          copy_module_opts = opts[:copy_module_opts]
+          module_names.each do |module_name|
+            copy_module_opts[:source] = File.join(source_dir, module_name)
+            copy_module_to(one_or_more_hosts, copy_module_opts)
+          end
+        end
+
         #Recursive method for finding the module root
         # Assumes that a Modulefile exists
         # @param [String] possible_module_directory
